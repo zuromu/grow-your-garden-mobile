@@ -6,6 +6,8 @@ import '../models/event.dart';
 import '../services/event_service.dart';
 import '../widgets/event_card.dart';
 
+import 'event_detail_page.dart';
+
 /// The Plant Event list: search, filters, cards, and every empty or error state from Figma.
 class EventsPage extends StatefulWidget {
   const EventsPage({super.key, this.service});
@@ -56,6 +58,20 @@ class _EventsPageState extends State<EventsPage> {
     _query = '';
     _reload();
   }
+  
+  Future<void> _openEvent(Event event) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => EventDetailPage(eventId: event.id!, service: _service)),
+    );
+    if (!mounted) return;
+    if (result == 'deleted') {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Event deleted. It's off the Events page now.")));
+    }
+    // Load again so RSVP counts and deleted events are up to date
+    _reload();
+  }
+
 
   @override
   void dispose() {
@@ -143,7 +159,7 @@ class _EventsPageState extends State<EventsPage> {
                 return Column(
                   children: [
                     for (final event in events) ...[
-                      EventCard(event: event, onTap: () {}),
+                      EventCard(event: event, onTap: () => _openEvent(event)),
                       const SizedBox(height: 16),
                     ],
                   ],
