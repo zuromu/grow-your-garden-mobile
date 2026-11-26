@@ -1,5 +1,5 @@
 import 'package:material_ui/material_ui.dart';
-
+import 'screens/events_page.dart';
 import 'screens/garden_page.dart';
 
 void main() {
@@ -23,6 +23,7 @@ class GrowYourGardenApp extends StatelessWidget {
       routes: {
         '/': (context) => const HomePage(),
         '/garden': (context) => const GardenPage(),
+        '/events': (context) => const EventsPage(),
       },
     );
   }
@@ -59,6 +60,14 @@ class HomePage extends StatelessWidget {
                 },
                 icon: const Icon(Icons.spa),
                 label: const Text('Explore Garden'),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/events');
+                },
+                icon: const Icon(Icons.event_outlined),
+                label: const Text('See events'),
               ),
             ],
           ),
