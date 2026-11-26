@@ -7,6 +7,7 @@ import '../services/event_service.dart';
 import '../widgets/event_card.dart';
 
 import 'event_detail_page.dart';
+import 'event_form_page.dart';
 
 /// The Plant Event list: search, filters, cards, and every empty or error state from Figma.
 class EventsPage extends StatefulWidget {
@@ -51,6 +52,20 @@ class _EventsPageState extends State<EventsPage> {
       _query = text.trim();
       _reload();
     });
+  }
+
+  Future<void> _host() async {
+    if (_service.token == null) {
+      showLoginSheet(context, 'Log in to host an event');
+      return;
+    }
+    final created = await Navigator.push<Event>(
+      context,
+      MaterialPageRoute(builder: (context) => EventFormPage(service: _service)),
+    );
+    if (created == null || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Event hosted. It's on the Events page now.")));
+    _reload();
   }
 
   void _clearSearch() {
@@ -170,7 +185,7 @@ class _EventsPageState extends State<EventsPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: _host,
         backgroundColor: eventBrand,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
@@ -213,7 +228,7 @@ class _EventsPageState extends State<EventsPage> {
       title: 'No upcoming events yet',
       message: 'Be the first to host one. Seed swaps, workshops and harvest days all count.',
       buttonLabel: 'Host an event',
-      onPressed: () {},
+      onPressed: _host,
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../models/event.dart';
 import '../services/event_service.dart';
 import '../widgets/event_card.dart';
+import 'event_form_page.dart';
 import 'events_page.dart';
 
 const _days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -13,6 +14,33 @@ const _monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 String longDate(DateTime date) {
   final d = date.toLocal();
   return '${_days[d.weekday - 1]}, ${d.day} ${_monthNames[d.month - 1]} ${d.year}';
+}
+
+/// The "Log in to ..." bottom sheet from Figma, used before RSVP and before hosting.
+void showLoginSheet(BuildContext context, String title) {
+  showModalBottomSheet(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => _SheetBody(
+      title: title,
+      children: [
+        const Text("You need an account for this. You'll come right back here after logging in."),
+        const SizedBox(height: 16),
+        // Log in opens the login page once the team's token login is ready
+        FilledButton(
+          onPressed: () => Navigator.pop(context),
+          style: FilledButton.styleFrom(backgroundColor: eventBrand, minimumSize: const Size.fromHeight(48)),
+          child: const Text('Log in'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton(
+          onPressed: () => Navigator.pop(context),
+          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+          child: const Text('Not now'),
+        ),
+      ],
+    ),
+  );
 }
 
 /// One event: photo, info, what to bring, host, and the sticky RSVP or host bar from Figma.
@@ -75,31 +103,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         goingCount: e.goingCount + (going ? 1 : -1), isGoing: going,
       );
 
-  void _askToLogIn() {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => _SheetBody(
-        title: 'Log in to RSVP',
-        children: [
-          const Text("You need an account to join events. You'll come right back to this event after logging in."),
-          const SizedBox(height: 16),
-          // Log in opens the login page once the team's token login is ready
-          FilledButton(
-            onPressed: () => Navigator.pop(context),
-            style: FilledButton.styleFrom(backgroundColor: eventBrand, minimumSize: const Size.fromHeight(48)),
-            child: const Text('Log in'),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-            child: const Text('Not now'),
-          ),
-        ],
-      ),
-    );
-  }
+  void _askToLogIn() => showLoginSheet(context, 'Log in to RSVP');
+
 
   void _askToCancel(Event event) {
     showModalBottomSheet(
@@ -122,6 +127,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _edit(Event event) async {
+    final saved = await Navigator.push<Event>(
+      context,
+      MaterialPageRoute(builder: (context) => EventFormPage(service: _service, event: event)),
+    );
+    if (saved == null || !mounted) return;
+    setState(() => _event = saved);
+    _toast('Changes saved');
   }
 
   Future<void> _confirmDelete(Event event) async {
@@ -262,7 +277,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     if (isHost) {
       left = Expanded(
         child: OutlinedButton(
-          onPressed: () {},
+          onPressed: () => _edit(event),
           style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
           child: const Text('Edit event'),
         ),

@@ -18,6 +18,14 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+/// A plant the host can pick as the event's theme.
+class PlantChoice {
+  const PlantChoice(this.slug, this.name);
+
+  final String slug;
+  final String name;
+}
+
 /// Talks to the Plant Event API (/events/api/) in the Django repo.
 class EventService {
   EventService({http.Client? client, this.token}) : _client = client ?? http.Client();
@@ -60,10 +68,20 @@ class EventService {
     return Event.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
-  Future<Event> updateEvent(String id, Event event) async {
+  /// sendStartTime: false when the host did not change the start, so an event
+  /// that already started can still get its text fixed (same rule as the website).
+  Future<Event> updateEvent(String id, Event event, {bool sendStartTime = true}) async {
+    final body = event.toJson();
+    if (!sendStartTime) body.remove('start_time');
     final response = await _send(() => _client.patch(_uri('/events/api/$id/'),
-        headers: _headers, body: jsonEncode(event.toJson())));
+        headers: _headers, body: jsonEncode(body)));
     return Event.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+  
+  Future<List<PlantChoice>> getPlantChoices() async {
+    final response = await _send(() => _client.get(_uri('/events/api/plants/'), headers: _headers));
+    final data = jsonDecode(response.body) as List;
+    return data.map((item) => PlantChoice(item['slug'] as String, item['name'] as String)).toList();
   }
 
   Future<void> deleteEvent(String id) async {
